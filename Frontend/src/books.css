@@ -1,0 +1,225 @@
+.books-container {
+  padding: 2rem;
+  background-color: #000000;
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+.books-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1a1a1a;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 8px 16px;
+  background-color: transparent;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-tab:hover {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: #374151;
+}
+
+.filter-tab.active {
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+}
+
+.filter-tab-count {
+  background-color: #2a2a2a;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.filter-tab.active .filter-tab-count {
+  background-color: #1e40af;
+}
+
+.filter-tab .status-icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-icon.read {
+  background-color: #6ee7b7;
+}
+
+.status-icon.reading {
+  background-color: #93c5fd;
+}
+
+.status-icon.to-read {
+  background-color: #fdba74;
+}
+
+/* Books Navigation */
+.books-nav {
+  margin-top: 16px;
+}
+
+.books-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.books-item {
+  margin: 0;
+}
+
+.books-item a {
+  display: block;
+  padding: 12px 16px;
+  background-color: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  color: #9ca3af;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.books-item a:hover {
+  background-color: #1a1a1a;
+  border-color: #2a2a2a;
+  transform: translateX(4px);
+  color: #ffffff;
+}
+
+.books-item a.active {
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+}
+
+.books-item a.pending {
+  color: #3b82f6;
+}
+
+.book-info-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-title {
+  font-size: 1rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.book-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-fav {
+  color: #fbbf24;
+  font-size: 1.125rem;
+}
+
+/* Status Badge Small (for list view) */
+.book-status-badge-small {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.book-status-badge-small.read {
+  background-color: #064e3b;
+  color: #6ee7b7;
+  border: 1px solid #065f46;
+}
+
+.book-status-badge-small.reading {
+  background-color: #1e3a8a;
+  color: #93c5fd;
+  border: 1px solid #1e40af;
+}
+
+.book-status-badge-small.to-read {
+  background-color: #7c2d12;
+  color: #fdba74;
+  border: 1px solid #9a3412;
+}
+
+/* No Books Message */
+.no-books {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.no-books i {
+  font-style: italic;
+  color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .books-container {
+    padding: 1rem;
+  }
+
+  .books-title {
+    font-size: 1.5rem;
+  }
+
+  .filter-tabs {
+    gap: 6px;
+  }
+
+  .filter-tab {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .filter-tab-count {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .book-info-link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
