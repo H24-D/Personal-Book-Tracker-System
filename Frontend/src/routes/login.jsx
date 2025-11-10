@@ -8,18 +8,20 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state && location.state.from) || "/books";
 
-  // Navigate when user is set
+  // Only navigate if user just logged in (not already logged in)
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
+
   useEffect(() => {
-    if (user) {
+    if (user && justLoggedIn) {
       console.log("User set to:", user);
       navigate(from, { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, justLoggedIn, navigate, from]);
 
   function getErrorMessage(err) {
     const message = err.message || "Login failed";
@@ -45,7 +47,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(username, password);
-      // Don't navigate here - let the useEffect handle it
+      setJustLoggedIn(true); // Mark that we just logged in
     } catch (err) {
       setError(getErrorMessage(err));
       setLoading(false);
@@ -61,6 +63,29 @@ export default function Login() {
             <h1>Personal Book Tracker</h1>
             <p className="tagline">Organize and manage your reading journey</p>
           </div>
+
+          {isAuthenticated && (
+            <div className="alert" style={{
+              background: 'rgba(59, 130, 246, 0.15)',
+              color: '#93c5fd',
+              border: '1px solid rgba(59, 130, 246, 0.35)',
+              marginBottom: '1rem'
+            }}>
+              <span className="alert-icon">ℹ️</span>
+              <span>You are already logged in as <strong>{user?.username}</strong>. <button 
+                onClick={() => navigate('/books')} 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#60a5fa',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  padding: 0,
+                  font: 'inherit'
+                }}
+              >Go to My Books</button></span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-form">
             <h2>Welcome Back</h2>

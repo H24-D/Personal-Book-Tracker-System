@@ -32,7 +32,6 @@ export default function Root() {
         {user && (
           <div className="user-info">
             <p className="username">👤 {user.username}</p>
-            {/* <p className="user-role">{user.role || "User"}</p> */}
           </div>
         )}
 
@@ -87,6 +86,16 @@ export default function Root() {
               >
                 ➕ Add Books
               </NavLink>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  window.location.href = "/login";
+                }}
+                className="loginbutton"
+              >
+                🔑 Login
+              </button>
             </li>
             <li>
               <button
