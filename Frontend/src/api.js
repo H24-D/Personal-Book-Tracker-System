@@ -4,16 +4,12 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
 
 let authToken = null;
 
-/**
- * Store/clear token in memory and localStorage and keep axios defaults in sync.
- */
 export function setAuthToken(token) {
   authToken = token || null;
   try {
     if (token) localStorage.setItem("token", token);
     else localStorage.removeItem("token");
   } catch (e) {
-    // ignore storage errors
   }
 
   if (token) {
@@ -39,7 +35,6 @@ const axiosClient = axios.create({
   timeout: 10000,
 });
 
-// Attach token before each request (fallback to localStorage)
 axiosClient.interceptors.request.use(
   (config) => {
     try {
@@ -49,20 +44,19 @@ axiosClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (e) {
-      // ignore
+
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Handle common response cases
 axiosClient.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
 
-    // On 401 clear token so UI can react (AuthProvider should handle redirect)
+
     if (status === 401) {
       try {
         localStorage.removeItem("token");
@@ -71,7 +65,6 @@ axiosClient.interceptors.response.use(
       delete axiosClient.defaults.headers.common.Authorization;
     }
 
-    // normalize error for callers
     const errorPayload = {
       message: err?.response?.data?.message || err.message || "Request failed",
       status: status || 0,
@@ -84,7 +77,6 @@ axiosClient.interceptors.response.use(
   }
 );
 
-// Convenience helpers that return response data
 export default {
   client: axiosClient,
   get: (path, opts) =>

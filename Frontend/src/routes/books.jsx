@@ -14,10 +14,8 @@ export default function Books() {
   const { books, q } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Get active filter from URL params, default to 'all'
   const activeFilter = searchParams.get("status") || "all";
 
-  // Calculate counts for each status (removed 'unset')
   const statusCounts = useMemo(() => {
     const counts = {
       all: books.length,
@@ -35,13 +33,11 @@ export default function Books() {
     return counts;
   }, [books]);
 
-  // Filter books based on active filter (removed 'unset' case)
   const filteredBooks = useMemo(() => {
     if (activeFilter === 'all') return books;
     return books.filter(book => book.status === activeFilter);
   }, [books, activeFilter]);
 
-  // Removed 'No Status' from filters array
   const filters = [
     { id: 'all', label: 'All Books', icon: null },
     { id: 'to-read', label: 'To Read', icon: 'to-read' },
@@ -65,7 +61,6 @@ export default function Books() {
         {q ? `Search results for "${q}"` : "All Books"}
       </h2>
 
-      {/* Filter Tabs */}
       <div className="filter-tabs">
         {filters.map(filter => (
           <button

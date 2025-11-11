@@ -1,24 +1,19 @@
-import { Form, Link, useLoaderData, useFetcher } from "react-router-dom";
+import { Form, useLoaderData, useFetcher } from "react-router-dom";
 import { getBook, updateBook } from "../books";
-import { useState } from "react";
 
-// Export loader function
 export async function loader({ params }) {
   const book = await getBook(params.bookId);
   return { book };
 }
 
-// Export action function
 export async function action({ request, params }) {
   const formData = await request.formData();
   const updates = {};
   
-  // Handle favorite update
   if (formData.has("favorite")) {
     updates.favorite = formData.get("favorite") === "true";
   }
   
-  // Handle status update
   if (formData.has("status")) {
     updates.status = formData.get("status");
   }
@@ -33,11 +28,7 @@ export default function Book() {
     <div id="book">
       <div>
         <img
-          key={book.cover}
-          src={
-            book.cover ||
-            `https://robohash.org/${book.id}.png?size=200x200`
-          }
+          src={`https://robohash.org/${book.id}.png?size=200x200`}
           alt={book.title}
         />
       </div>

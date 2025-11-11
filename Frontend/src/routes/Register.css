@@ -157,7 +157,6 @@ body, html {
   text-decoration: underline;
 }
 
-/* Responsive Design */
 @media (max-width: 640px) {
   .register-container {
     padding: 30px 16px;
@@ -191,7 +190,6 @@ body, html {
   }
 }
 
-/* Focus visible for accessibility */
 .form-input:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;

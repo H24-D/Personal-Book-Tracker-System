@@ -13,7 +13,7 @@ export default function Login() {
   const location = useLocation();
   const from = (location.state && location.state.from) || "/books";
 
-  // Only navigate if user just logged in (not already logged in)
+
   const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(username, password);
-      setJustLoggedIn(true); // Mark that we just logged in
+      setJustLoggedIn(true); 
     } catch (err) {
       setError(getErrorMessage(err));
       setLoading(false);

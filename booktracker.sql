@@ -1,28 +1,37 @@
-CREATE DATABASE booktracker;-- 
 USE booktracker;
 
-CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL
-);
-SELECT id, username, password FROM users;
-ALTER TABLE users 
-ADD COLUMN first_name VARCHAR(255) AFTER username,
-ADD COLUMN last_name VARCHAR(255) AFTER first_name,
-ADD COLUMN email VARCHAR(255) UNIQUE AFTER last_name,
-ADD COLUMN mobile VARCHAR(10) AFTER email,
-ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER mobile;
-DESCRIBE users;
-SELECT * FROM users;
+-- Drop both tables
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS users;
 
---    CREATE TABLE IF NOT EXISTS books (
---      id INT AUTO_INCREMENT PRIMARY KEY,
---      user_id INT NOT NULL,
---      title VARCHAR(255) NOT NULL,
---      author VARCHAR(255) NOT NULL,
---      status ENUM('to-read', 'reading', 'completed') DEFAULT 'to-read',
---      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
---    );
-DELETE FROM users WHERE email = 'd2876379@gmail.com'
+-- Recreate users table with correct types
+CREATE TABLE users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  email VARCHAR(255) UNIQUE,
+  mobile VARCHAR(10),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Create books table
+CREATE TABLE books (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  status ENUM('to-read', 'reading', 'read') DEFAULT 'to-read',
+  review TEXT,
+  favorite BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Verify tables were created
+SHOW TABLES;
+DESCRIBE users;
+DESCRIBE books;

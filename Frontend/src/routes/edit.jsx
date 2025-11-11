@@ -1,4 +1,4 @@
-import { Form, useLoaderData,redirect,useNavigate,} from "react-router-dom";
+import { Form, useLoaderData, redirect, useNavigate } from "react-router-dom";
 import { updateBook } from "../books";
 
 export async function action({ request, params }) {
@@ -9,7 +9,7 @@ export async function action({ request, params }) {
 }
 
 export default function EditBook() {
-  const { book } = useLoaderData() || { book: { title: "", author: "", cover: "", status: "to-read", review: "" } };
+  const { book } = useLoaderData() || { book: { title: "", author: "", status: "to-read", review: "" } };
   const navigate = useNavigate();
 
   return (

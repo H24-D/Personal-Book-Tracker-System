@@ -61,6 +61,24 @@ async function init() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await conn.query(createUsersTable);
+
+    const createBooksTable = `
+      CREATE TABLE IF NOT EXISTS books (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        author VARCHAR(255) NOT NULL,
+        status ENUM('to-read', 'reading', 'read') DEFAULT 'to-read',
+        review TEXT,
+        favorite BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    await conn.query(createBooksTable);
+    
+    console.log("✅ Tables created/verified successfully");
   } finally {
     conn.release();
   }

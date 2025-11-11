@@ -141,5 +141,130 @@ async function register(req, res, next) {
   }
 }
 
-module.exports = { register, login, validatePassword };
+// Get all books for logged-in user
+async function getBooks(req, res) {
+  try {
+    const userId = req.user.sub;
+    const pool = db.getPool();
+    const [books] = await pool.query(
+      "SELECT * FROM books WHERE user_id = ? ORDER BY created_at DESC",
+      [userId]
+    );
+    res.json(books);
+  } catch (err) {
+    console.error("Get books error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Get single book
+async function getBook(req, res) {
+  try {
+    const userId = req.user.sub;
+    const bookId = req.params.id;
+    const pool = db.getPool();
+    const [books] = await pool.query(
+      "SELECT * FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
+    if (books.length === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    res.json(books[0]);
+  } catch (err) {
+    console.error("Get book error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Create book
+async function createBook(req, res) {
+  try {
+    const userId = req.user.sub;
+    const { title, author, status, review, favorite } = req.body;
+    
+    if (!title || !author) {
+      return res.status(400).json({ message: "Title and author required" });
+    }
+
+    const pool = db.getPool();
+    const [result] = await pool.query(
+      "INSERT INTO books (user_id, title, author, status, review, favorite) VALUES (?, ?, ?, ?, ?, ?)",
+      [userId, title, author, status || "to-read", review || "", favorite || false]
+    );
+    
+    const [newBook] = await pool.query(
+      "SELECT * FROM books WHERE id = ?",
+      [result.insertId]
+    );
+    
+    res.status(201).json(newBook[0]);
+  } catch (err) {
+    console.error("Create book error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Update book
+async function updateBook(req, res) {
+  try {
+    const userId = req.user.sub;
+    const bookId = req.params.id;
+    const { title, author, status, review, favorite } = req.body;
+
+    const pool = db.getPool();
+    
+    // Verify book belongs to user
+    const [existing] = await pool.query(
+      "SELECT * FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
+    
+    if (existing.length === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    await pool.query(
+      "UPDATE books SET title = ?, author = ?, status = ?, review = ?, favorite = ? WHERE id = ? AND user_id = ?",
+      [title, author, status, review, favorite, bookId, userId]
+    );
+    
+    const [updatedBook] = await pool.query(
+      "SELECT * FROM books WHERE id = ?",
+      [bookId]
+    );
+    
+    res.json(updatedBook[0]);
+  } catch (err) {
+    console.error("Update book error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Delete book
+async function deleteBook(req, res) {
+  try {
+    const userId = req.user.sub;
+    const bookId = req.params.id;
+    
+    const pool = db.getPool();
+    const [result] = await pool.query(
+      "DELETE FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    
+    res.json({ message: "Book deleted" });
+  } catch (err) {
+    console.error("Delete book error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+
+module.exports = {register, login, validatePassword,getBooks,getBook,createBook,updateBook,deleteBook
+};
 

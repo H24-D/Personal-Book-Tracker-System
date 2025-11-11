@@ -4,7 +4,8 @@ require("dotenv").config();
 
 const db = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
-const booksRoutes = require("./routes/books"); // ADD THIS LINE
+const { requireAuth } = require("./middleware/auth");
+const authController = require("./controllers/authController");
 
 const app = express();
 
@@ -49,7 +50,14 @@ async function start() {
 
   // mount routes after DB ready
   app.use("/api/auth", authRoutes);
-  app.use("/api/books", booksRoutes); // ADD THIS LINE
+  
+  // Books routes with authentication
+  app.get("/api/books", requireAuth, authController.getBooks);
+  app.get("/api/books/:id", requireAuth, authController.getBook);
+  app.post("/api/books", requireAuth, authController.createBook);
+  app.put("/api/books/:id", requireAuth, authController.updateBook);
+  app.delete("/api/books/:id", requireAuth, authController.deleteBook);
+  
   app.get("/api/health", (req, res) => res.json({ ok: true }));
   app.get("/", (req, res) => res.send("📚 Personal Book Tracker API running"));
 

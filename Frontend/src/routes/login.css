@@ -1,7 +1,4 @@
-/* ============================================
-   FILE: Frontend/src/routes/login.css
-   FULL SCREEN DARK THEME
-   ============================================ */
+
 
 * {
   margin: 0;
@@ -37,7 +34,6 @@ body {
   overflow-y: auto;
 }
 
-/* Animated background gradient */
 .login-wrapper::before {
   content: '';
   position: absolute;
@@ -350,7 +346,6 @@ body {
   width: 100%;
 }
 
-/* Responsive - Tablet */
 @media (max-width: 768px) {
   .login-content {
     max-width: 550px;
@@ -371,7 +366,6 @@ body {
   }
 }
 
-/* Responsive - Mobile */
 @media (max-width: 480px) {
   .login-wrapper {
     padding: 0;

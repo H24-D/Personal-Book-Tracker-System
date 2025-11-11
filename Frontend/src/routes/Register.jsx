@@ -27,22 +27,18 @@ export default function Register() {
 }
 
 function validatePassword(password) {
-  // Minimum 8 characters
   if (password.length < 8) {
     return false;
   }
 
-  // Must contain at least one letter
   if (!/[a-zA-Z]/.test(password)) {
     return false;
   }
 
-  // Must contain at least one number
   if (!/[0-9]/.test(password)) {
     return false;
   }
 
-  // Must contain at least one special character
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     return false;
   }
@@ -81,12 +77,12 @@ function validatePassword(password) {
     return;
   }
 
-  // Validate mobile
+
   if (!validateMobile(formData.mobile)) {
     setError("Mobile number must be exactly 10 digits.");
     return;
   }
-  // ... all your validations ...
+
 
   setLoading(true);
 
@@ -102,7 +98,7 @@ function validatePassword(password) {
     alert("Registration successful! Please login.");
     navigate("/login");
   } catch (err) {
-    // Friendly error messages
+
     if (err.message.includes("already exists") || err.message.includes("username")) {
       setError("This username is already taken. Please choose a different one.");
     } else if (err.message.includes("already registered") || err.message.includes("email")) {
