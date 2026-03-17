@@ -9,7 +9,17 @@ const authController = require("./controllers/authController");
 
 const app = express();
 
-app.use(cors());
+// Updated CORS for deployment
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    /\.vercel\.app$/,
+    process.env.FRONTEND_URL,
+  ].filter(Boolean),
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // relaxed CSP for local dev tools (optional)
@@ -50,14 +60,14 @@ async function start() {
 
   // mount routes after DB ready
   app.use("/api/auth", authRoutes);
-  
+
   // Books routes with authentication
   app.get("/api/books", requireAuth, authController.getBooks);
   app.get("/api/books/:id", requireAuth, authController.getBook);
   app.post("/api/books", requireAuth, authController.createBook);
   app.put("/api/books/:id", requireAuth, authController.updateBook);
   app.delete("/api/books/:id", requireAuth, authController.deleteBook);
-  
+
   app.get("/api/health", (req, res) => res.json({ ok: true }));
   app.get("/", (req, res) => res.send("📚 Personal Book Tracker API running"));
 
