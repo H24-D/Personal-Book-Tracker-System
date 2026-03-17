@@ -34,6 +34,11 @@ async function init() {
   if (pool) return;
   await ensureDatabaseExists();
 
+  // Use SSL only in production (Render/Filess.io), not locally
+  const sslConfig = process.env.NODE_ENV === "production"
+    ? { ssl: { rejectUnauthorized: false } }
+    : {};
+
   pool = mysql.createPool({
     host: MYSQL_HOST,
     port: Number(MYSQL_PORT),
@@ -43,6 +48,7 @@ async function init() {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    ...sslConfig,
   });
 
   const conn = await pool.getConnection();
@@ -77,7 +83,7 @@ async function init() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await conn.query(createBooksTable);
-    
+
     console.log("✅ Tables created/verified successfully");
   } finally {
     conn.release();
