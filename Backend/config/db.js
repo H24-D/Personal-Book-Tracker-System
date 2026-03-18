@@ -34,8 +34,8 @@ async function init() {
   if (pool) return;
   await ensureDatabaseExists();
 
-  // Use SSL only in production (Render/Filess.io), not locally
-  const sslConfig = process.env.NODE_ENV === "production"
+  // SSL only when explicitly enabled via env var
+  const sslConfig = process.env.MYSQL_SSL === "true"
     ? { ssl: { rejectUnauthorized: false } }
     : {};
 
