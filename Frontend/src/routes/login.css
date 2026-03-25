@@ -1,5 +1,3 @@
-
-
 * {
   margin: 0;
   padding: 0;
@@ -59,14 +57,8 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.9;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%       { transform: scale(1.2); opacity: 0.9; }
 }
 
 .login-container {
@@ -93,14 +85,8 @@ body {
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(50px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(50px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .login-header {
@@ -117,12 +103,8 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-15px); }
 }
 
 .login-header h1 {
@@ -143,6 +125,7 @@ body {
   line-height: 1.5;
 }
 
+/* ── Form ── */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -168,7 +151,7 @@ body {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .form-group label {
@@ -215,6 +198,46 @@ body {
   font-weight: 400;
 }
 
+/* ── Forgot Password Link ── */
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.forgot-password-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0ea5e9;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background: #38bdf8;
+  transition: width 0.3s ease;
+}
+
+.forgot-password-link:hover {
+  color: #38bdf8;
+}
+
+.forgot-password-link:hover::after {
+  width: 100%;
+}
+
+/* ── Alert ── */
 .alert {
   padding: 18px 20px;
   border-radius: 14px;
@@ -228,15 +251,9 @@ body {
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-8px);
-  }
-  75% {
-    transform: translateX(8px);
-  }
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-8px); }
+  75%       { transform: translateX(8px); }
 }
 
 .alert-error {
@@ -247,10 +264,11 @@ body {
 }
 
 .alert-icon {
-  font-size: 22px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
+/* ── Login Button ── */
 .login-button {
   padding: 16px 24px;
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
@@ -301,11 +319,10 @@ body {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
+/* ── Footer ── */
 .form-footer {
   text-align: center;
   font-size: 17px;
@@ -338,89 +355,199 @@ body {
   transition: width 0.3s ease;
 }
 
-.link:hover {
-  color: #38bdf8;
+.link:hover { color: #38bdf8; }
+.link:hover::after { width: 100%; }
+
+/* ══════════════════════════════════════
+   FORGOT PASSWORD MODAL
+══════════════════════════════════════ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
 }
 
-.link:hover::after {
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-box {
+  position: relative;
   width: 100%;
+  max-width: 440px;
+  background: rgba(24, 24, 27, 0.99);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: 24px;
+  padding: 44px 40px 40px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.05),
+    0 30px 60px -10px rgba(0, 0, 0, 0.9),
+    0 0 60px rgba(14, 165, 233, 0.08);
+  animation: modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
 }
 
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.88) translateY(24px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Close button */
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: #a1a1aa;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Icon */
+.modal-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 16px rgba(14, 165, 233, 0.5));
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Title */
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+}
+
+/* Subtitle */
+.modal-subtitle {
+  font-size: 14px;
+  color: #a1a1aa;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+.modal-subtitle strong {
+  color: #0ea5e9;
+}
+
+/* Form inside modal */
+.modal-form {
+  text-align: left;
+}
+
+.modal-form .form-group {
+  margin-bottom: 4px;
+}
+
+.modal-alert {
+  margin-bottom: 16px !important;
+  font-size: 14px;
+}
+
+.modal-submit-btn {
+  margin-top: 8px !important;
+}
+
+/* Back link */
+.modal-back-link {
+  display: inline-block;
+  margin-top: 20px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #71717a;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-back-link:hover {
+  color: #a1a1aa;
+}
+
+/* ── Success state ── */
+.modal-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.success-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+  animation: bounceIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bounceIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-hint {
+  font-size: 13px;
+  color: #52525b;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .login-content {
     max-width: 550px;
     padding: 50px 40px;
     border-radius: 28px;
   }
-
-  .logo {
-    font-size: 75px;
-  }
-
-  .login-header h1 {
-    font-size: 40px;
-  }
-
-  .login-form h2 {
-    font-size: 28px;
-  }
+  .logo { font-size: 75px; }
+  .login-header h1 { font-size: 40px; }
+  .login-form h2 { font-size: 28px; }
+  .modal-box { padding: 40px 28px 36px; }
 }
 
 @media (max-width: 480px) {
-  .login-wrapper {
-    padding: 0;
-  }
-
-  .login-container {
-    padding: 20px 15px;
-  }
-
+  .login-wrapper { padding: 0; }
+  .login-container { padding: 20px 15px; }
   .login-content {
     max-width: 100%;
     padding: 40px 30px;
     border-radius: 24px;
   }
-
-  .logo {
-    font-size: 65px;
-    margin-bottom: 25px;
-  }
-
-  .login-header {
-    margin-bottom: 40px;
-  }
-
-  .login-header h1 {
-    font-size: 34px;
-  }
-
-  .tagline {
-    font-size: 16px;
-  }
-
-  .login-form h2 {
-    font-size: 26px;
-  }
-
-  .form-subtitle {
-    font-size: 15px;
-  }
-
-  .form-group label {
-    font-size: 15px;
-  }
-
-  .form-input {
-    font-size: 16px;
-    padding: 16px 18px;
-  }
-
-  .login-button {
-    padding: 17px 24px;
-    font-size: 17px;
-  }
-
-  .form-footer {
-    font-size: 15px;
-  }
+  .logo { font-size: 65px; margin-bottom: 25px; }
+  .login-header { margin-bottom: 40px; }
+  .login-header h1 { font-size: 34px; }
+  .tagline { font-size: 16px; }
+  .login-form h2 { font-size: 26px; }
+  .form-subtitle { font-size: 15px; }
+  .form-group label { font-size: 15px; }
+  .form-input { font-size: 16px; padding: 16px 18px; }
+  .login-button { padding: 17px 24px; font-size: 17px; }
+  .form-footer { font-size: 15px; }
+  .modal-box { padding: 40px 24px 32px; border-radius: 20px; }
+  .modal-title { font-size: 22px; }
 }
