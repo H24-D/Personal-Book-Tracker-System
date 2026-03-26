@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const db = require("../config/db");
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -130,17 +131,7 @@ async function register(req, res, next) {
 }
 
 // ══════════════════════════════════════════════════════════
-// FORGOT PASSWORD
-// ──────────────────────────────────────────────────────────
-// How it works (no email library required):
-//   1. User submits their Gmail address.
-//   2. We look up the email in the DB.
-//   3. If found, we generate a secure random token, store it
-//      in a password_reset_tokens table (with expiry), and
-//      return the reset link in the JSON response so you can
-//      wire it to an email service (nodemailer, SendGrid, etc.)
-//      when you're ready.
-//   4. We ALWAYS return 200 so attackers can't enumerate emails.
+// FORGOT PASSWORD  — with nodemailer email sending
 // ══════════════════════════════════════════════════════════
 async function forgotPassword(req, res) {
   try {
@@ -193,7 +184,7 @@ async function forgotPassword(req, res) {
 
     // ── Generate a secure token (expires in 1 hour) ──
     const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     await pool.query(
       "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
@@ -204,37 +195,95 @@ async function forgotPassword(req, res) {
     const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
 
-    // ── Log for development (replace with real email sending in production) ──
-    console.log("─────────────────────────────────────────");
-    console.log("[ForgotPassword] Reset link generated:");
-    console.log(`  Email : ${normalizedEmail}`);
-    console.log(`  Link  : ${resetLink}`);
-    console.log(`  Expiry: ${expiresAt.toISOString()}`);
-    console.log("─────────────────────────────────────────");
+    // ── Send email via nodemailer ──
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,  // Gmail App Password (16 chars, no spaces)
+      },
+    });
 
-    // ── TODO: Replace the console.log above with your email sender ──
-    // Example with nodemailer (add to package.json: "nodemailer": "^6.x"):
-    //
-    // const nodemailer = require("nodemailer");
-    // const transporter = nodemailer.createTransport({
-    //   service: "gmail",
-    //   auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
-    // });
-    // await transporter.sendMail({
-    //   from: `"Book Tracker" <${process.env.MAIL_USER}>`,
-    //   to: normalizedEmail,
-    //   subject: "Reset your password",
-    //   html: `<p>Click <a href="${resetLink}">here</a> to reset your password. Link expires in 1 hour.</p>`,
-    // });
+    await transporter.sendMail({
+      from: `"📚 Book Tracker" <${process.env.MAIL_USER}>`,
+      to: normalizedEmail,
+      subject: "Reset your Book Tracker password",
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    max-width: 480px; margin: 0 auto; background: #09090b;
+                    border: 1px solid #27272a; border-radius: 16px; overflow: hidden;">
 
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #0ea5e9, #0284c7);
+                      padding: 32px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 8px;">📚</div>
+            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">
+              Book Tracker
+            </h1>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 36px 32px;">
+            <h2 style="color: #ffffff; font-size: 20px; margin: 0 0 12px;">
+              Reset your password
+            </h2>
+            <p style="color: #a1a1aa; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
+              We received a request to reset your password. Click the button below
+              to choose a new one. This link expires in <strong style="color:#e4e4e7;">1 hour</strong>.
+            </p>
+
+            <!-- CTA Button -->
+            <div style="text-align: center; margin-bottom: 28px;">
+              <a href="${resetLink}"
+                 style="display: inline-block; padding: 14px 32px;
+                        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+                        color: #ffffff; text-decoration: none; font-weight: 700;
+                        font-size: 16px; border-radius: 10px;
+                        box-shadow: 0 8px 24px rgba(14,165,233,0.35);">
+                Reset Password
+              </a>
+            </div>
+
+            <!-- Fallback link -->
+            <p style="color: #71717a; font-size: 13px; line-height: 1.6; margin: 0 0 8px;">
+              If the button doesn't work, copy and paste this link into your browser:
+            </p>
+            <p style="word-break: break-all; margin: 0 0 28px;">
+              <a href="${resetLink}" style="color: #0ea5e9; font-size: 13px;">${resetLink}</a>
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #27272a; margin: 0 0 24px;" />
+
+            <p style="color: #52525b; font-size: 13px; margin: 0;">
+              If you didn't request a password reset, you can safely ignore this email.
+              Your password will not change.
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div style="padding: 20px 32px; background: #18181b; text-align: center;">
+            <p style="color: #52525b; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} Personal Book Tracker. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log(`[ForgotPassword] Reset email sent to: ${normalizedEmail}`);
     return res.json({ message: "If that email is registered, a reset link has been sent." });
+
   } catch (err) {
     console.error("ForgotPassword error:", err && err.stack ? err.stack : err);
-    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Server error" : (err.message || "Server error") });
+    res.status(500).json({
+      message: process.env.NODE_ENV === "production"
+        ? "Server error"
+        : (err.message || "Server error"),
+    });
   }
 }
 
-// ── Book handlers (unchanged) ──
+// ── Book handlers ──
 async function getBooks(req, res) {
   try {
     const userId = req.user.sub;
