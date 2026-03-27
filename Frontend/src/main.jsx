@@ -4,9 +4,9 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import { createRoutesFromElements, Route } from "react-router-dom";
 import "./index.css";
 import ErrorPage from "./error-page";
-import Root, { loader as rootLoader } from "./routes/root"; // Remove action as rootAction
-import Book, { loader as bookLoader, action as bookAction, } from "./routes/book";
-import EditBook, { action as editAction, } from "./routes/edit";
+import Root, { loader as rootLoader } from "./routes/root";
+import Book, { loader as bookLoader, action as bookAction } from "./routes/book";
+import EditBook, { action as editAction } from "./routes/edit";
 import { action as destroyAction } from "./routes/destroy";
 import Index from "./routes/index";
 import { addBookAction } from "./routes/add";
@@ -16,6 +16,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import Login from "./routes/login";
 import Logout from "./routes/logout";
 import Register from "./routes/Register";
+import ResetPassword from "./routes/ResetPassword";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,6 +24,7 @@ const router = createBrowserRouter(
       <Route path="login" element={<Login />} />
       <Route path="register" element={<Register />} />
       <Route path="logout" element={<Logout />} />
+      <Route path="reset-password" element={<ResetPassword />} />
       <Route
         path="/"
         element={<Protected><Root /></Protected>}
@@ -31,7 +33,6 @@ const router = createBrowserRouter(
       >
         <Route errorElement={<ErrorPage />}>
           <Route index element={<Navigate to="/books" replace />} />
-          
           <Route
             path="books"
             element={<Protected><Books /></Protected>}

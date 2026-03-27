@@ -1,10 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const https = require("https"); // built-in Node.js — no install needed
+const https = require("https");
 const db = require("../config/db");
-
-// ── nodemailer is NOT used anymore — removed ──
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -28,17 +26,11 @@ function validatePassword(password) {
   return { valid: true, message: "Valid password" };
 }
 
-// ══════════════════════════════════════════════════════════
-// Brevo HTTP API helper — uses Node built-in https
-// No SMTP, no nodemailer, works on Render free tier
-// ══════════════════════════════════════════════════════════
+// ── Brevo HTTP API helper (no SMTP, works on Render free tier) ──
 function sendBrevoEmail({ to, subject, html }) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
-      sender: {
-        name: "Book Tracker",
-        email: process.env.MAIL_FROM,
-      },
+      sender: { name: "Book Tracker", email: process.env.MAIL_FROM },
       to: [{ email: to }],
       subject,
       htmlContent: html,
@@ -73,12 +65,28 @@ function sendBrevoEmail({ to, subject, html }) {
   });
 }
 
+// ── Ensure password_reset_tokens table exists ──
+async function ensureTokenTable(pool) {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id     INT UNSIGNED NOT NULL,
+      token       VARCHAR(64)  NOT NULL UNIQUE,
+      expires_at  DATETIME     NOT NULL,
+      used        TINYINT(1)   DEFAULT 0,
+      created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
+
 async function login(req, res, next) {
   try {
     console.log("[DEBUG] /api/auth/login body:", req.body);
 
     if (typeof db.getUserByUsername !== "function") {
-      console.error("DB helper getUserByUsername missing. DB module keys:", Object.keys(db));
+      console.error("DB helper getUserByUsername missing.");
       return res.status(500).json({ message: "Server misconfiguration (DB helper missing)" });
     }
 
@@ -88,13 +96,9 @@ async function login(req, res, next) {
     }
 
     const user = await db.getUserByUsername(username);
-    console.log("[DEBUG] DB returned user:", !!user);
-
     if (!user) return res.status(401).json({ message: "invalid credentials" });
 
     const ok = await bcrypt.compare(password, user.password);
-    console.log("[DEBUG] bcrypt.compare result:", ok);
-
     if (!ok) return res.status(401).json({ message: "invalid credentials" });
 
     const payload = { sub: user.id, username: user.username };
@@ -140,7 +144,6 @@ async function register(req, res, next) {
     }
 
     if (typeof db.getUserByUsername !== "function" || typeof db.createUser !== "function") {
-      console.error("DB helpers are missing:", Object.keys(db));
       return res.status(500).json({ message: "Server misconfiguration (DB helpers missing)" });
     }
 
@@ -164,12 +167,8 @@ async function register(req, res, next) {
     console.error("Register error:", err && err.stack ? err.stack : err);
 
     if (err.code === "ER_DUP_ENTRY") {
-      if (err.message.includes("email")) {
-        return res.status(409).json({ message: "This email is already registered" });
-      }
-      if (err.message.includes("username")) {
-        return res.status(409).json({ message: "Username already exists" });
-      }
+      if (err.message.includes("email")) return res.status(409).json({ message: "This email is already registered" });
+      if (err.message.includes("username")) return res.status(409).json({ message: "Username already exists" });
       return res.status(409).json({ message: "This account already exists" });
     }
 
@@ -177,45 +176,27 @@ async function register(req, res, next) {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// FORGOT PASSWORD — Brevo HTTP API (no SMTP, no nodemailer)
-// ══════════════════════════════════════════════════════════
+// ── FORGOT PASSWORD ──
 async function forgotPassword(req, res) {
   try {
     const { email } = req.body || {};
-
     if (!email || typeof email !== "string") {
       return res.status(400).json({ message: "Email is required" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-
     if (!normalizedEmail.endsWith("@gmail.com")) {
       return res.status(400).json({ message: "Please enter a valid @gmail.com address" });
     }
 
-    // ── Ensure the reset-token table exists ──
     const pool = db.getPool();
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS password_reset_tokens (
-        id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        user_id     INT UNSIGNED NOT NULL,
-        token       VARCHAR(64)  NOT NULL UNIQUE,
-        expires_at  DATETIME     NOT NULL,
-        used        TINYINT(1)   DEFAULT 0,
-        created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `);
+    await ensureTokenTable(pool);
 
-    // ── Look up user by email ──
     const [rows] = await pool.query(
       "SELECT id, email FROM users WHERE LOWER(email) = ? LIMIT 1",
       [normalizedEmail]
     );
 
-    // Always respond 200 to prevent email enumeration
     if (!rows || rows.length === 0) {
       console.log(`[ForgotPassword] Email not found (silent): ${normalizedEmail}`);
       return res.json({ message: "If that email is registered, a reset link has been sent." });
@@ -223,13 +204,11 @@ async function forgotPassword(req, res) {
 
     const user = rows[0];
 
-    // ── Invalidate any existing tokens for this user ──
     await pool.query(
       "UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND used = 0",
       [user.id]
     );
 
-    // ── Generate a secure token (expires in 1 hour) ──
     const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -238,11 +217,9 @@ async function forgotPassword(req, res) {
       [user.id, token, expiresAt]
     );
 
-    // ── Build the reset URL ──
     const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
 
-    // ── Send via Brevo HTTP API ──
     await sendBrevoEmail({
       to: normalizedEmail,
       subject: "Reset your Book Tracker password",
@@ -250,45 +227,37 @@ async function forgotPassword(req, res) {
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
                     max-width:480px;margin:0 auto;background:#09090b;
                     border:1px solid #27272a;border-radius:16px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#0ea5e9,#0284c7);
-                      padding:32px;text-align:center;">
+          <div style="background:linear-gradient(135deg,#0ea5e9,#0284c7);padding:32px;text-align:center;">
             <div style="font-size:48px;margin-bottom:8px;">📚</div>
-            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
-              Book Tracker
-            </h1>
+            <h1 style="color:#fff;margin:0;font-size:22px;font-weight:700;">Book Tracker</h1>
           </div>
           <div style="padding:36px 32px;">
-            <h2 style="color:#ffffff;font-size:20px;margin:0 0 12px;">
-              Reset your password
-            </h2>
+            <h2 style="color:#fff;font-size:20px;margin:0 0 12px;">Reset your password</h2>
             <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 28px;">
-              We received a request to reset your password. Click the button below
-              to choose a new one. This link expires in
-              <strong style="color:#e4e4e7;">1 hour</strong>.
+              Click the button below to reset your password.
+              This link expires in <strong style="color:#e4e4e7;">1 hour</strong>.
             </p>
             <div style="text-align:center;margin-bottom:28px;">
               <a href="${resetLink}"
                  style="display:inline-block;padding:14px 32px;
                         background:linear-gradient(135deg,#0ea5e9,#0284c7);
-                        color:#ffffff;text-decoration:none;font-weight:700;
+                        color:#fff;text-decoration:none;font-weight:700;
                         font-size:16px;border-radius:10px;">
                 Reset Password
               </a>
             </div>
-            <p style="color:#71717a;font-size:13px;line-height:1.6;margin:0 0 8px;">
-              If the button doesn't work, copy and paste this link:
-            </p>
-            <p style="word-break:break-all;margin:0 0 28px;">
+            <p style="color:#71717a;font-size:13px;margin:0 0 8px;">Or copy this link:</p>
+            <p style="word-break:break-all;margin:0 0 24px;">
               <a href="${resetLink}" style="color:#0ea5e9;font-size:13px;">${resetLink}</a>
             </p>
-            <hr style="border:none;border-top:1px solid #27272a;margin:0 0 24px;" />
+            <hr style="border:none;border-top:1px solid #27272a;margin:0 0 20px;" />
             <p style="color:#52525b;font-size:13px;margin:0;">
-              If you didn't request a password reset, you can safely ignore this email.
+              If you didn't request this, you can safely ignore this email.
             </p>
           </div>
           <div style="padding:20px 32px;background:#18181b;text-align:center;">
             <p style="color:#52525b;font-size:12px;margin:0;">
-              © ${new Date().getFullYear()} Personal Book Tracker. All rights reserved.
+              © ${new Date().getFullYear()} Personal Book Tracker
             </p>
           </div>
         </div>
@@ -300,11 +269,85 @@ async function forgotPassword(req, res) {
 
   } catch (err) {
     console.error("ForgotPassword error:", err && err.stack ? err.stack : err);
-    res.status(500).json({
-      message: process.env.NODE_ENV === "production"
-        ? "Server error"
-        : (err.message || "Server error"),
-    });
+    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Server error" : (err.message || "Server error") });
+  }
+}
+
+// ── VERIFY RESET TOKEN ──
+async function verifyResetToken(req, res) {
+  try {
+    const { token } = req.body || {};
+    if (!token) return res.json({ valid: false });
+
+    const pool = db.getPool();
+    await ensureTokenTable(pool);
+
+    const [rows] = await pool.query(
+      "SELECT id, expires_at, used FROM password_reset_tokens WHERE token = ? LIMIT 1",
+      [token]
+    );
+
+    if (!rows || rows.length === 0) return res.json({ valid: false });
+
+    const row = rows[0];
+    const now = new Date();
+    const expired = new Date(row.expires_at) < now;
+
+    if (row.used || expired) return res.json({ valid: false });
+
+    return res.json({ valid: true });
+  } catch (err) {
+    console.error("VerifyResetToken error:", err);
+    res.json({ valid: false });
+  }
+}
+
+// ── RESET PASSWORD ──
+async function resetPassword(req, res) {
+  try {
+    const { token, password } = req.body || {};
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and password are required" });
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ message: passwordValidation.message });
+    }
+
+    const pool = db.getPool();
+    await ensureTokenTable(pool);
+
+    const [rows] = await pool.query(
+      "SELECT id, user_id, expires_at, used FROM password_reset_tokens WHERE token = ? LIMIT 1",
+      [token]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ message: "Invalid or expired reset link." });
+    }
+
+    const row = rows[0];
+    const expired = new Date(row.expires_at) < new Date();
+
+    if (row.used || expired) {
+      return res.status(400).json({ message: "This reset link has already been used or has expired." });
+    }
+
+    // ── Update password ──
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query("UPDATE users SET password = ? WHERE id = ?", [hashed, row.user_id]);
+
+    // ── Mark token as used ──
+    await pool.query("UPDATE password_reset_tokens SET used = 1 WHERE id = ?", [row.id]);
+
+    console.log(`[ResetPassword] Password updated for user_id: ${row.user_id}`);
+    return res.json({ message: "Password updated successfully." });
+
+  } catch (err) {
+    console.error("ResetPassword error:", err && err.stack ? err.stack : err);
+    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Server error" : (err.message || "Server error") });
   }
 }
 
@@ -313,10 +356,7 @@ async function getBooks(req, res) {
   try {
     const userId = req.user.sub;
     const pool = db.getPool();
-    const [books] = await pool.query(
-      "SELECT * FROM books WHERE user_id = ? ORDER BY created_at DESC",
-      [userId]
-    );
+    const [books] = await pool.query("SELECT * FROM books WHERE user_id = ? ORDER BY created_at DESC", [userId]);
     res.json(books);
   } catch (err) {
     console.error("Get books error:", err);
@@ -329,13 +369,8 @@ async function getBook(req, res) {
     const userId = req.user.sub;
     const bookId = req.params.id;
     const pool = db.getPool();
-    const [books] = await pool.query(
-      "SELECT * FROM books WHERE id = ? AND user_id = ?",
-      [bookId, userId]
-    );
-    if (books.length === 0) {
-      return res.status(404).json({ message: "Book not found" });
-    }
+    const [books] = await pool.query("SELECT * FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
+    if (books.length === 0) return res.status(404).json({ message: "Book not found" });
     res.json(books[0]);
   } catch (err) {
     console.error("Get book error:", err);
@@ -347,17 +382,13 @@ async function createBook(req, res) {
   try {
     const userId = req.user.sub;
     const { title, author, status, review, favorite } = req.body;
-
-    if (!title || !author) {
-      return res.status(400).json({ message: "Title and author required" });
-    }
+    if (!title || !author) return res.status(400).json({ message: "Title and author required" });
 
     const pool = db.getPool();
     const [result] = await pool.query(
       "INSERT INTO books (user_id, title, author, status, review, favorite) VALUES (?, ?, ?, ?, ?, ?)",
       [userId, title, author, status || "to-read", review || "", favorite || false]
     );
-
     const [newBook] = await pool.query("SELECT * FROM books WHERE id = ?", [result.insertId]);
     res.status(201).json(newBook[0]);
   } catch (err) {
@@ -373,20 +404,13 @@ async function updateBook(req, res) {
     const { title, author, status, review, favorite } = req.body;
 
     const pool = db.getPool();
-    const [existing] = await pool.query(
-      "SELECT * FROM books WHERE id = ? AND user_id = ?",
-      [bookId, userId]
-    );
-
-    if (existing.length === 0) {
-      return res.status(404).json({ message: "Book not found" });
-    }
+    const [existing] = await pool.query("SELECT * FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
+    if (existing.length === 0) return res.status(404).json({ message: "Book not found" });
 
     await pool.query(
       "UPDATE books SET title = ?, author = ?, status = ?, review = ?, favorite = ? WHERE id = ? AND user_id = ?",
       [title, author, status, review, favorite, bookId, userId]
     );
-
     const [updatedBook] = await pool.query("SELECT * FROM books WHERE id = ?", [bookId]);
     res.json(updatedBook[0]);
   } catch (err) {
@@ -399,17 +423,9 @@ async function deleteBook(req, res) {
   try {
     const userId = req.user.sub;
     const bookId = req.params.id;
-
     const pool = db.getPool();
-    const [result] = await pool.query(
-      "DELETE FROM books WHERE id = ? AND user_id = ?",
-      [bookId, userId]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Book not found" });
-    }
-
+    const [result] = await pool.query("DELETE FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Book not found" });
     res.json({ message: "Book deleted" });
   } catch (err) {
     console.error("Delete book error:", err);
@@ -421,6 +437,8 @@ module.exports = {
   register,
   login,
   forgotPassword,
+  verifyResetToken,
+  resetPassword,
   validatePassword,
   getBooks,
   getBook,
