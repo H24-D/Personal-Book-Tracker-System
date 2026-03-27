@@ -1,8 +1,10 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const https = require("https"); // built-in Node.js — no install needed
 const db = require("../config/db");
+
+// ── nodemailer is NOT used anymore — removed ──
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -24,6 +26,51 @@ function validatePassword(password) {
     return { valid: false, message: "Password must contain at least one special character" };
   }
   return { valid: true, message: "Valid password" };
+}
+
+// ══════════════════════════════════════════════════════════
+// Brevo HTTP API helper — uses Node built-in https
+// No SMTP, no nodemailer, works on Render free tier
+// ══════════════════════════════════════════════════════════
+function sendBrevoEmail({ to, subject, html }) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      sender: {
+        name: "Book Tracker",
+        email: process.env.MAIL_FROM,
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    });
+
+    const options = {
+      hostname: "api.brevo.com",
+      path: "/v3/smtp/email",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Length": Buffer.byteLength(payload),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(JSON.parse(data));
+        } else {
+          reject(new Error(`Brevo API error ${res.statusCode}: ${data}`));
+        }
+      });
+    });
+
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
 }
 
 async function login(req, res, next) {
@@ -131,7 +178,7 @@ async function register(req, res, next) {
 }
 
 // ══════════════════════════════════════════════════════════
-// FORGOT PASSWORD  — with nodemailer email sending
+// FORGOT PASSWORD — Brevo HTTP API (no SMTP, no nodemailer)
 // ══════════════════════════════════════════════════════════
 async function forgotPassword(req, res) {
   try {
@@ -195,74 +242,52 @@ async function forgotPassword(req, res) {
     const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
 
-    // ── Send email via nodemailer ──
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,  // Gmail App Password (16 chars, no spaces)
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"📚 Book Tracker" <${process.env.MAIL_USER}>`,
+    // ── Send via Brevo HTTP API ──
+    await sendBrevoEmail({
       to: normalizedEmail,
       subject: "Reset your Book Tracker password",
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    max-width: 480px; margin: 0 auto; background: #09090b;
-                    border: 1px solid #27272a; border-radius: 16px; overflow: hidden;">
-
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #0ea5e9, #0284c7);
-                      padding: 32px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 8px;">📚</div>
-            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+                    max-width:480px;margin:0 auto;background:#09090b;
+                    border:1px solid #27272a;border-radius:16px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#0ea5e9,#0284c7);
+                      padding:32px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">📚</div>
+            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
               Book Tracker
             </h1>
           </div>
-
-          <!-- Body -->
-          <div style="padding: 36px 32px;">
-            <h2 style="color: #ffffff; font-size: 20px; margin: 0 0 12px;">
+          <div style="padding:36px 32px;">
+            <h2 style="color:#ffffff;font-size:20px;margin:0 0 12px;">
               Reset your password
             </h2>
-            <p style="color: #a1a1aa; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
+            <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 28px;">
               We received a request to reset your password. Click the button below
-              to choose a new one. This link expires in <strong style="color:#e4e4e7;">1 hour</strong>.
+              to choose a new one. This link expires in
+              <strong style="color:#e4e4e7;">1 hour</strong>.
             </p>
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin-bottom: 28px;">
+            <div style="text-align:center;margin-bottom:28px;">
               <a href="${resetLink}"
-                 style="display: inline-block; padding: 14px 32px;
-                        background: linear-gradient(135deg, #0ea5e9, #0284c7);
-                        color: #ffffff; text-decoration: none; font-weight: 700;
-                        font-size: 16px; border-radius: 10px;
-                        box-shadow: 0 8px 24px rgba(14,165,233,0.35);">
+                 style="display:inline-block;padding:14px 32px;
+                        background:linear-gradient(135deg,#0ea5e9,#0284c7);
+                        color:#ffffff;text-decoration:none;font-weight:700;
+                        font-size:16px;border-radius:10px;">
                 Reset Password
               </a>
             </div>
-
-            <!-- Fallback link -->
-            <p style="color: #71717a; font-size: 13px; line-height: 1.6; margin: 0 0 8px;">
-              If the button doesn't work, copy and paste this link into your browser:
+            <p style="color:#71717a;font-size:13px;line-height:1.6;margin:0 0 8px;">
+              If the button doesn't work, copy and paste this link:
             </p>
-            <p style="word-break: break-all; margin: 0 0 28px;">
-              <a href="${resetLink}" style="color: #0ea5e9; font-size: 13px;">${resetLink}</a>
+            <p style="word-break:break-all;margin:0 0 28px;">
+              <a href="${resetLink}" style="color:#0ea5e9;font-size:13px;">${resetLink}</a>
             </p>
-
-            <hr style="border: none; border-top: 1px solid #27272a; margin: 0 0 24px;" />
-
-            <p style="color: #52525b; font-size: 13px; margin: 0;">
+            <hr style="border:none;border-top:1px solid #27272a;margin:0 0 24px;" />
+            <p style="color:#52525b;font-size:13px;margin:0;">
               If you didn't request a password reset, you can safely ignore this email.
-              Your password will not change.
             </p>
           </div>
-
-          <!-- Footer -->
-          <div style="padding: 20px 32px; background: #18181b; text-align: center;">
-            <p style="color: #52525b; font-size: 12px; margin: 0;">
+          <div style="padding:20px 32px;background:#18181b;text-align:center;">
+            <p style="color:#52525b;font-size:12px;margin:0;">
               © ${new Date().getFullYear()} Personal Book Tracker. All rights reserved.
             </p>
           </div>
@@ -270,7 +295,7 @@ async function forgotPassword(req, res) {
       `,
     });
 
-    console.log(`[ForgotPassword] Reset email sent to: ${normalizedEmail}`);
+    console.log(`[ForgotPassword] Reset email sent via Brevo to: ${normalizedEmail}`);
     return res.json({ message: "If that email is registered, a reset link has been sent." });
 
   } catch (err) {
