@@ -26,7 +26,7 @@ function validatePassword(password) {
   return { valid: true, message: "Valid password" };
 }
 
-// ── Brevo HTTP API helper (no SMTP, works on Render free tier) ──
+// ── Brevo HTTP API helper ──
 function sendBrevoEmail({ to, subject, html }) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
@@ -290,9 +290,7 @@ async function verifyResetToken(req, res) {
     if (!rows || rows.length === 0) return res.json({ valid: false });
 
     const row = rows[0];
-    const now = new Date();
-    const expired = new Date(row.expires_at) < now;
-
+    const expired = new Date(row.expires_at) < new Date();
     if (row.used || expired) return res.json({ valid: false });
 
     return res.json({ valid: true });
@@ -330,16 +328,12 @@ async function resetPassword(req, res) {
 
     const row = rows[0];
     const expired = new Date(row.expires_at) < new Date();
-
     if (row.used || expired) {
       return res.status(400).json({ message: "This reset link has already been used or has expired." });
     }
 
-    // ── Update password ──
     const hashed = await bcrypt.hash(password, 10);
     await pool.query("UPDATE users SET password = ? WHERE id = ?", [hashed, row.user_id]);
-
-    // ── Mark token as used ──
     await pool.query("UPDATE password_reset_tokens SET used = 1 WHERE id = ?", [row.id]);
 
     console.log(`[ResetPassword] Password updated for user_id: ${row.user_id}`);
@@ -356,7 +350,10 @@ async function getBooks(req, res) {
   try {
     const userId = req.user.sub;
     const pool = db.getPool();
-    const [books] = await pool.query("SELECT * FROM books WHERE user_id = ? ORDER BY created_at DESC", [userId]);
+    const [books] = await pool.query(
+      "SELECT * FROM books WHERE user_id = ? ORDER BY created_at DESC",
+      [userId]
+    );
     res.json(books);
   } catch (err) {
     console.error("Get books error:", err);
@@ -369,7 +366,10 @@ async function getBook(req, res) {
     const userId = req.user.sub;
     const bookId = req.params.id;
     const pool = db.getPool();
-    const [books] = await pool.query("SELECT * FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
+    const [books] = await pool.query(
+      "SELECT * FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
     if (books.length === 0) return res.status(404).json({ message: "Book not found" });
     res.json(books[0]);
   } catch (err) {
@@ -397,20 +397,39 @@ async function createBook(req, res) {
   }
 }
 
+// ══════════════════════════════════════════════════════════
+// UPDATE BOOK — handles partial updates (e.g. favorite-only)
+// ══════════════════════════════════════════════════════════
 async function updateBook(req, res) {
   try {
     const userId = req.user.sub;
     const bookId = req.params.id;
-    const { title, author, status, review, favorite } = req.body;
-
     const pool = db.getPool();
-    const [existing] = await pool.query("SELECT * FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
-    if (existing.length === 0) return res.status(404).json({ message: "Book not found" });
+
+    // Fetch the existing book first
+    const [existing] = await pool.query(
+      "SELECT * FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    const current = existing[0];
+
+    // Merge: use incoming value if provided, otherwise keep existing
+    const title    = req.body.title    !== undefined ? req.body.title    : current.title;
+    const author   = req.body.author   !== undefined ? req.body.author   : current.author;
+    const status   = req.body.status   !== undefined ? req.body.status   : current.status;
+    const review   = req.body.review   !== undefined ? req.body.review   : current.review;
+    const favorite = req.body.favorite !== undefined ? req.body.favorite : current.favorite;
 
     await pool.query(
       "UPDATE books SET title = ?, author = ?, status = ?, review = ?, favorite = ? WHERE id = ? AND user_id = ?",
       [title, author, status, review, favorite, bookId, userId]
     );
+
     const [updatedBook] = await pool.query("SELECT * FROM books WHERE id = ?", [bookId]);
     res.json(updatedBook[0]);
   } catch (err) {
@@ -424,7 +443,10 @@ async function deleteBook(req, res) {
     const userId = req.user.sub;
     const bookId = req.params.id;
     const pool = db.getPool();
-    const [result] = await pool.query("DELETE FROM books WHERE id = ? AND user_id = ?", [bookId, userId]);
+    const [result] = await pool.query(
+      "DELETE FROM books WHERE id = ? AND user_id = ?",
+      [bookId, userId]
+    );
     if (result.affectedRows === 0) return res.status(404).json({ message: "Book not found" });
     res.json({ message: "Book deleted" });
   } catch (err) {
