@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { Outlet, Link, NavLink, useLoaderData, Form, useNavigation, useSubmit } from "react-router-dom";
+import {
+  Outlet, Link, NavLink, useLoaderData,
+  Form, useNavigation, useSubmit
+} from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { getBooks } from "../books";
 
@@ -21,11 +24,34 @@ export default function Root() {
     new URLSearchParams(navigation.location.search).has("q");
 
   useEffect(() => {
-    document.getElementById("q").value = q;
+    const el = document.getElementById("q");
+    if (el) el.value = q;
   }, [q]);
 
   return (
     <>
+      {/* ══════════════════════════════
+          MOBILE TOP HEADER
+      ══════════════════════════════ */}
+      <div id="mobile-header">
+        <div className="mobile-title">
+          📚 Book Tracker
+        </div>
+
+        {user && (
+          <div className="mobile-user">
+            {user.username}
+          </div>
+        )}
+
+        <Link to="/books/new" className="mobile-new-btn">
+          + New
+        </Link>
+      </div>
+
+      {/* ══════════════════════════════
+          DESKTOP SIDEBAR
+      ══════════════════════════════ */}
       <div id="sidebar">
         <h1>📚 Personal Book Tracker</h1>
 
@@ -52,20 +78,11 @@ export default function Root() {
                 });
               }}
             />
-            <div
-              id="search-spinner"
-              aria-hidden
-              hidden={!searching}
-            />
-            <div
-              className="sr-only"
-              aria-live="polite"
-            ></div>
+            <div id="search-spinner" aria-hidden hidden={!searching} />
+            <div className="sr-only" aria-live="polite"></div>
           </Form>
 
-          <Link to="/books/new" className="new-button">
-            New
-          </Link>
+          <Link to="/books/new" className="new-button">New</Link>
         </div>
 
         <nav>
@@ -89,9 +106,7 @@ export default function Root() {
             </li>
             <li>
               <button
-                onClick={() => {
-                  window.location.href = "/login";
-                }}
+                onClick={() => { window.location.href = "/login"; }}
                 className="loginbutton"
               >
                 🔑 Login
@@ -99,10 +114,7 @@ export default function Root() {
             </li>
             <li>
               <button
-                onClick={() => {
-                  logout();
-                  window.location.href = "/login";
-                }}
+                onClick={() => { logout(); window.location.href = "/login"; }}
                 className="logout-button"
               >
                 🚪 Log out
@@ -112,9 +124,45 @@ export default function Root() {
         </nav>
       </div>
 
-      <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
+      {/* ══════════════════════════════
+          MAIN CONTENT
+      ══════════════════════════════ */}
+      <div
+        id="detail"
+        className={navigation.state === "loading" ? "loading" : ""}
+      >
         <Outlet />
       </div>
+
+      {/* ══════════════════════════════
+          MOBILE BOTTOM NAV
+      ══════════════════════════════ */}
+      <nav id="mobile-nav">
+        <NavLink
+          to="/books"
+          className={({ isActive }) => isActive ? "active" : ""}
+          end
+        >
+          <span className="nav-icon">📖</span>
+          Books
+        </NavLink>
+
+        <NavLink
+          to="/books/new"
+          className={({ isActive }) => isActive ? "active" : ""}
+        >
+          <span className="nav-icon">➕</span>
+          Add
+        </NavLink>
+
+        <button
+          className="logout-mob"
+          onClick={() => { logout(); window.location.href = "/login"; }}
+        >
+          <span className="nav-icon">🚪</span>
+          Logout
+        </button>
+      </nav>
     </>
   );
 }
