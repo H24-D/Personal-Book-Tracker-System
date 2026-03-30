@@ -25,7 +25,9 @@ export default function Root() {
 
   useEffect(() => {
     const el = document.getElementById("q");
-    if (el) el.value = q;
+    if (el) el.value = q || "";
+    const elMobile = document.getElementById("q-mobile");
+    if (elMobile) elMobile.value = q || "";
   }, [q]);
 
   return (
@@ -34,19 +36,49 @@ export default function Root() {
           MOBILE TOP HEADER
       ══════════════════════════════ */}
       <div id="mobile-header">
-        <div className="mobile-title">
-          📚 Book Tracker
+        {/* Row 1: title + username + new button */}
+        <div className="mobile-header-top">
+          <div className="mobile-title">
+            📚 <span>Book Tracker</span>
+          </div>
+          {user && (
+            <div className="mobile-user">
+              {user.username}
+            </div>
+          )}
+          <Link to="/books/new" className="mobile-new-btn">
+            + New
+          </Link>
         </div>
 
-        {user && (
-          <div className="mobile-user">
-            {user.username}
-          </div>
-        )}
-
-        <Link to="/books/new" className="mobile-new-btn">
-          + New
-        </Link>
+        {/* Row 2: search bar */}
+        <div className="mobile-search-row">
+          <Form
+            id="mobile-search-form"
+            role="search"
+            action="/books"
+            className="mobile-search-form"
+          >
+            <div className="mobile-search-wrap">
+              <span className="mobile-search-icon">🔍</span>
+              <input
+                id="q-mobile"
+                className={`mobile-search-input${searching ? " loading" : ""}`}
+                aria-label="Search books"
+                placeholder="Search books..."
+                type="search"
+                name="q"
+                defaultValue={q || ""}
+                onChange={(event) => {
+                  const isFirstSearch = q == null;
+                  submit(event.currentTarget.form, {
+                    replace: !isFirstSearch,
+                  });
+                }}
+              />
+            </div>
+          </Form>
+        </div>
       </div>
 
       {/* ══════════════════════════════
@@ -81,7 +113,6 @@ export default function Root() {
             <div id="search-spinner" aria-hidden hidden={!searching} />
             <div className="sr-only" aria-live="polite"></div>
           </Form>
-
           <Link to="/books/new" className="new-button">New</Link>
         </div>
 
