@@ -30,35 +30,21 @@ export default function Root() {
     if (elMobile) elMobile.value = q || "";
   }, [q]);
 
+  const initials = user?.username ? user.username.charAt(0).toUpperCase() : "?";
+
   return (
     <>
-      {/* ══════════════════════════════
-          MOBILE TOP HEADER
-      ══════════════════════════════ */}
+      {/* MOBILE TOP HEADER */}
       <div id="mobile-header">
-        {/* Row 1: title + username + new button */}
         <div className="mobile-header-top">
           <div className="mobile-title">
             📚 <span>Book Tracker</span>
           </div>
-          {user && (
-            <div className="mobile-user">
-              {user.username}
-            </div>
-          )}
-          <Link to="/books/new" className="mobile-new-btn">
-            + New
-          </Link>
+          {user && <div className="mobile-user">{user.username}</div>}
+          <Link to="/books/new" className="mobile-new-btn">+ New</Link>
         </div>
-
-        {/* Row 2: search bar */}
         <div className="mobile-search-row">
-          <Form
-            id="mobile-search-form"
-            role="search"
-            action="/books"
-            className="mobile-search-form"
-          >
+          <Form id="mobile-search-form" role="search" action="/books" className="mobile-search-form">
             <div className="mobile-search-wrap">
               <span className="mobile-search-icon">🔍</span>
               <input
@@ -71,9 +57,7 @@ export default function Root() {
                 defaultValue={q || ""}
                 onChange={(event) => {
                   const isFirstSearch = q == null;
-                  submit(event.currentTarget.form, {
-                    replace: !isFirstSearch,
-                  });
+                  submit(event.currentTarget.form, { replace: !isFirstSearch });
                 }}
               />
             </div>
@@ -81,15 +65,15 @@ export default function Root() {
         </div>
       </div>
 
-      {/* ══════════════════════════════
-          DESKTOP SIDEBAR
-      ══════════════════════════════ */}
+      {/* DESKTOP SIDEBAR */}
       <div id="sidebar">
-        <h1>📚 Personal Book Tracker</h1>
-
         {user && (
           <div className="user-info">
-            <p className="username">👤 {user.username}</p>
+            <div className="user-avatar">{initials}</div>
+            <div className="user-details">
+              <p className="username">{user.username}</p>
+              <p className="user-role">Reader</p>
+            </div>
           </div>
         )}
 
@@ -99,97 +83,64 @@ export default function Root() {
               id="q"
               className={searching ? "loading" : ""}
               aria-label="Search books"
-              placeholder="Search"
+              placeholder="Search books..."
               type="search"
               name="q"
               defaultValue={q}
               onChange={(event) => {
                 const isFirstSearch = q == null;
-                submit(event.currentTarget.form, {
-                  replace: !isFirstSearch,
-                });
+                submit(event.currentTarget.form, { replace: !isFirstSearch });
               }}
             />
             <div id="search-spinner" aria-hidden hidden={!searching} />
             <div className="sr-only" aria-live="polite"></div>
           </Form>
-          <Link to="/books/new" className="new-button">New</Link>
+          <Link to="/books/new" className="new-button">+ New</Link>
         </div>
 
         <nav>
           <ul>
             <li>
-              <NavLink
-                to="/books"
-                className={({ isActive }) => isActive ? "nav-active" : ""}
-                end
-              >
+              <NavLink to="/books" className={({ isActive }) => isActive ? "nav-active" : ""} end>
                 📖 My Books
               </NavLink>
             </li>
             <li>
-              <NavLink
-                to="/books/new"
-                className={({ isActive }) => isActive ? "nav-active" : ""}
-              >
-                ➕ Add Books
+              <NavLink to="/books/new" className={({ isActive }) => isActive ? "nav-active" : ""}>
+                ➕ Add Book
               </NavLink>
-            </li>
-            <li>
-              <button
-                onClick={() => { window.location.href = "/login"; }}
-                className="loginbutton"
-              >
-                🔑 Login
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => { logout(); window.location.href = "/login"; }}
-                className="logout-button"
-              >
-                🚪 Log out
-              </button>
             </li>
           </ul>
         </nav>
+
+        <div className="sidebar-footer">
+          <button onClick={() => { window.location.href = "/login"; }} className="loginbutton">
+            🔑 Login
+          </button>
+          <button onClick={() => { logout(); window.location.href = "/login"; }} className="logout-button">
+            🚪 Log out
+          </button>
+        </div>
+
+        <h1>📚 Personal Book Tracker</h1>
       </div>
 
-      {/* ══════════════════════════════
-          MAIN CONTENT
-      ══════════════════════════════ */}
-      <div
-        id="detail"
-        className={navigation.state === "loading" ? "loading" : ""}
-      >
+      {/* MAIN CONTENT */}
+      <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
         <Outlet />
       </div>
 
-      {/* ══════════════════════════════
-          MOBILE BOTTOM NAV
-      ══════════════════════════════ */}
+      {/* MOBILE BOTTOM NAV */}
       <nav id="mobile-nav">
-        <NavLink
-          to="/books"
-          className={({ isActive }) => isActive ? "active" : ""}
-          end
-        >
+        <NavLink to="/books" className={({ isActive }) => isActive ? "active" : ""} end>
           <span className="nav-icon">📖</span>
           Books
         </NavLink>
-
-        <NavLink
-          to="/books/new"
-          className={({ isActive }) => isActive ? "active" : ""}
-        >
+        <NavLink to="/books/new" className={({ isActive }) => isActive ? "active" : ""}>
           <span className="nav-icon">➕</span>
           Add
         </NavLink>
-
-        <button
-          className="logout-mob"
-          onClick={() => { logout(); window.location.href = "/login"; }}
-        >
+        <button className="logout-mob" onClick={() => { logout(); window.location.href = "/login"; }}>
           <span className="nav-icon">🚪</span>
           Logout
         </button>
