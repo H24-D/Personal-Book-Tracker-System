@@ -34,7 +34,7 @@ export default function Root() {
 
   return (
     <>
-      {/* MOBILE TOP HEADER */}
+      {/* ── MOBILE TOP HEADER ── */}
       <div id="mobile-header">
         <div className="mobile-header-top">
           <div className="mobile-title">
@@ -65,8 +65,10 @@ export default function Root() {
         </div>
       </div>
 
-      {/* DESKTOP SIDEBAR */}
+      {/* ── DESKTOP SIDEBAR ── */}
       <div id="sidebar">
+
+        {/* User card */}
         {user && (
           <div className="user-info">
             <div className="user-avatar">{initials}</div>
@@ -77,6 +79,7 @@ export default function Root() {
           </div>
         )}
 
+        {/* Search + New */}
         <div>
           <Form id="search-form" role="search" action="/books">
             <input
@@ -98,6 +101,7 @@ export default function Root() {
           <Link to="/books/new" className="new-button">+ New</Link>
         </div>
 
+        {/* Nav */}
         <nav>
           <ul>
             <li>
@@ -113,6 +117,7 @@ export default function Root() {
           </ul>
         </nav>
 
+        {/* Footer: login + logout */}
         <div className="sidebar-footer">
           <button onClick={() => { window.location.href = "/login"; }} className="loginbutton">
             🔑 Login
@@ -122,15 +127,16 @@ export default function Root() {
           </button>
         </div>
 
+        {/* App label */}
         <h1>📚 Personal Book Tracker</h1>
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* ── MAIN CONTENT ── */}
       <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
         <Outlet />
       </div>
 
-      {/* MOBILE BOTTOM NAV */}
+      {/* ── MOBILE BOTTOM NAV ── */}
       <nav id="mobile-nav">
         <NavLink to="/books" className={({ isActive }) => isActive ? "active" : ""} end>
           <span className="nav-icon">📖</span>
