@@ -68,7 +68,7 @@ export default function Root() {
       {/* ── DESKTOP SIDEBAR ── */}
       <div id="sidebar">
 
-        {/* User card */}
+        {/* User card — sits at top */}
         {user && (
           <div className="user-info">
             <div className="user-avatar">{initials}</div>
@@ -79,8 +79,8 @@ export default function Root() {
           </div>
         )}
 
-        {/* Search + New */}
-        <div>
+        {/* Search + New button row */}
+        <div className="sidebar-search-row">
           <Form id="search-form" role="search" action="/books">
             <input
               id="q"
@@ -101,7 +101,7 @@ export default function Root() {
           <Link to="/books/new" className="new-button">+ New</Link>
         </div>
 
-        {/* Nav */}
+        {/* Nav links */}
         <nav>
           <ul>
             <li>
@@ -117,17 +117,27 @@ export default function Root() {
           </ul>
         </nav>
 
-        {/* Footer: login + logout */}
+        {/* Footer actions — uses nav-style links, NOT buttons */}
         <div className="sidebar-footer">
-          <button onClick={() => { window.location.href = "/login"; }} className="loginbutton">
-            🔑 Login
+          <button
+            type="button"
+            className="sidebar-footer-btn"
+            onClick={() => { window.location.href = "/login"; }}
+          >
+            <span className="sidebar-footer-icon">🔑</span>
+            Login
           </button>
-          <button onClick={() => { logout(); window.location.href = "/login"; }} className="logout-button">
-            🚪 Log out
+          <button
+            type="button"
+            className="sidebar-footer-btn sidebar-footer-btn--danger"
+            onClick={() => { logout(); window.location.href = "/login"; }}
+          >
+            <span className="sidebar-footer-icon">🚪</span>
+            Log out
           </button>
         </div>
 
-        {/* App label */}
+        {/* App label at very bottom */}
         <h1>📚 Personal Book Tracker</h1>
       </div>
 
@@ -146,7 +156,11 @@ export default function Root() {
           <span className="nav-icon">➕</span>
           Add
         </NavLink>
-        <button className="logout-mob" onClick={() => { logout(); window.location.href = "/login"; }}>
+        <button
+          type="button"
+          className="logout-mob"
+          onClick={() => { logout(); window.location.href = "/login"; }}
+        >
           <span className="nav-icon">🚪</span>
           Logout
         </button>
