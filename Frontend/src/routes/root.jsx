@@ -26,38 +26,37 @@ export default function Root() {
   useEffect(() => {
     const el = document.getElementById("q");
     if (el) el.value = q || "";
-    const elMobile = document.getElementById("q-mobile");
-    if (elMobile) elMobile.value = q || "";
+    const el2 = document.getElementById("q-mobile");
+    if (el2) el2.value = q || "";
   }, [q]);
 
   const initials = user?.username ? user.username.charAt(0).toUpperCase() : "?";
 
   return (
     <>
-      {/* ── MOBILE TOP HEADER ── */}
+      {/* ════════════════════════════════
+          MOBILE HEADER
+      ════════════════════════════════ */}
       <div id="mobile-header">
         <div className="mobile-header-top">
-          <div className="mobile-title">
-            📚 <span>Book Tracker</span>
-          </div>
-          {user && <div className="mobile-user">{user.username}</div>}
+          <span className="mobile-title">📚 <span>Book Tracker</span></span>
+          {user && <span className="mobile-user">{user.username}</span>}
           <Link to="/books/new" className="mobile-new-btn">+ New</Link>
         </div>
         <div className="mobile-search-row">
-          <Form id="mobile-search-form" role="search" action="/books" className="mobile-search-form">
+          <Form role="search" action="/books" className="mobile-search-form">
             <div className="mobile-search-wrap">
               <span className="mobile-search-icon">🔍</span>
               <input
                 id="q-mobile"
-                className={`mobile-search-input${searching ? " loading" : ""}`}
+                className="mobile-search-input"
                 aria-label="Search books"
                 placeholder="Search books..."
                 type="search"
                 name="q"
                 defaultValue={q || ""}
-                onChange={(event) => {
-                  const isFirstSearch = q == null;
-                  submit(event.currentTarget.form, { replace: !isFirstSearch });
+                onChange={(e) => {
+                  submit(e.currentTarget.form, { replace: q != null });
                 }}
               />
             </div>
@@ -65,102 +64,102 @@ export default function Root() {
         </div>
       </div>
 
-      {/* ── DESKTOP SIDEBAR ── */}
+      {/* ════════════════════════════════
+          DESKTOP SIDEBAR
+      ════════════════════════════════ */}
       <div id="sidebar">
 
-        {/* User card — sits at top */}
+        {/* User card */}
         {user && (
-          <div className="user-info">
-            <div className="user-avatar">{initials}</div>
-            <div className="user-details">
-              <p className="username">{user.username}</p>
-              <p className="user-role">Reader</p>
+          <div className="sb-user">
+            <div className="sb-avatar">{initials}</div>
+            <div className="sb-user-info">
+              <span className="sb-username">{user.username}</span>
+              <span className="sb-role">Reader</span>
             </div>
+            <span className="sb-online-dot" />
           </div>
         )}
 
-        {/* Search + New button row */}
-        <div className="sidebar-search-row">
-          <Form id="search-form" role="search" action="/books">
-            <input
-              id="q"
-              className={searching ? "loading" : ""}
-              aria-label="Search books"
-              placeholder="Search books..."
-              type="search"
-              name="q"
-              defaultValue={q}
-              onChange={(event) => {
-                const isFirstSearch = q == null;
-                submit(event.currentTarget.form, { replace: !isFirstSearch });
-              }}
-            />
-            <div id="search-spinner" aria-hidden hidden={!searching} />
-            <div className="sr-only" aria-live="polite"></div>
+        {/* Search + New — inline flex row */}
+        <div className="sb-search-row">
+          <Form role="search" action="/books" className="sb-search-form">
+            <div className="sb-search-wrap">
+              <svg className="sb-search-icon" viewBox="0 0 20 20" fill="none">
+                <path d="M13 13l3 3m-7-1a6 6 0 100-12 6 6 0 000 12z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              <input
+                id="q"
+                type="search"
+                name="q"
+                className={`sb-search-input${searching ? " loading" : ""}`}
+                placeholder="Search..."
+                aria-label="Search books"
+                defaultValue={q || ""}
+                onChange={(e) => {
+                  submit(e.currentTarget.form, { replace: q != null });
+                }}
+              />
+              {searching && <div className="sb-spinner" />}
+            </div>
           </Form>
-          <Link to="/books/new" className="new-button">+ New</Link>
+          <Link to="/books/new" className="sb-new-btn">+ New</Link>
         </div>
 
         {/* Nav links */}
-        <nav>
+        <nav className="sb-nav">
           <ul>
             <li>
-              <NavLink to="/books" className={({ isActive }) => isActive ? "nav-active" : ""} end>
-                📖 My Books
+              <NavLink to="/books" end className={({ isActive }) => isActive ? "sb-link sb-link--active" : "sb-link"}>
+                <span className="sb-link-icon">📖</span>
+                My Books
               </NavLink>
             </li>
             <li>
-              <NavLink to="/books/new" className={({ isActive }) => isActive ? "nav-active" : ""}>
-                ➕ Add Book
+              <NavLink to="/books/new" className={({ isActive }) => isActive ? "sb-link sb-link--active" : "sb-link"}>
+                <span className="sb-link-icon">➕</span>
+                Add Book
               </NavLink>
             </li>
           </ul>
         </nav>
 
-        {/* Footer actions — uses nav-style links, NOT buttons */}
-        <div className="sidebar-footer">
-          <button
-            type="button"
-            className="sidebar-footer-btn"
-            onClick={() => { window.location.href = "/login"; }}
-          >
-            <span className="sidebar-footer-icon">🔑</span>
+        {/* Footer */}
+        <div className="sb-footer">
+          <button type="button" className="sb-footer-link" onClick={() => { window.location.href = "/login"; }}>
+            <span className="sb-link-icon">🔑</span>
             Login
           </button>
-          <button
-            type="button"
-            className="sidebar-footer-btn sidebar-footer-btn--danger"
-            onClick={() => { logout(); window.location.href = "/login"; }}
-          >
-            <span className="sidebar-footer-icon">🚪</span>
+          <button type="button" className="sb-footer-link sb-footer-link--danger" onClick={() => { logout(); window.location.href = "/login"; }}>
+            <span className="sb-link-icon">🚪</span>
             Log out
           </button>
         </div>
 
-        {/* App label at very bottom */}
-        <h1>📚 Personal Book Tracker</h1>
+        {/* Branding */}
+        <div className="sb-brand">📚 Personal Book Tracker</div>
       </div>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* ════════════════════════════════
+          MAIN CONTENT
+      ════════════════════════════════ */}
       <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
         <Outlet />
       </div>
 
-      {/* ── MOBILE BOTTOM NAV ── */}
+      {/* ════════════════════════════════
+          MOBILE BOTTOM NAV
+      ════════════════════════════════ */}
       <nav id="mobile-nav">
-        <NavLink to="/books" className={({ isActive }) => isActive ? "active" : ""} end>
+        <NavLink to="/books" end className={({ isActive }) => isActive ? "mob-nav-item active" : "mob-nav-item"}>
           <span className="nav-icon">📖</span>
           Books
         </NavLink>
-        <NavLink to="/books/new" className={({ isActive }) => isActive ? "active" : ""}>
+        <NavLink to="/books/new" className={({ isActive }) => isActive ? "mob-nav-item active" : "mob-nav-item"}>
           <span className="nav-icon">➕</span>
           Add
         </NavLink>
-        <button
-          type="button"
-          className="logout-mob"
-          onClick={() => { logout(); window.location.href = "/login"; }}
-        >
+        <button type="button" className="mob-nav-item mob-logout" onClick={() => { logout(); window.location.href = "/login"; }}>
           <span className="nav-icon">🚪</span>
           Logout
         </button>
