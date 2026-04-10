@@ -16,17 +16,15 @@ export default function Books() {
   const activeFilter = searchParams.get("status") || "all";
 
   const statusCounts = useMemo(() => {
-    const counts = { all: books.length, "to-read": 0, reading: 0, read: 0 };
-    books.forEach((book) => {
-      if (book.status) counts[book.status] = (counts[book.status] || 0) + 1;
-    });
-    return counts;
+    const c = { all: books.length, "to-read": 0, reading: 0, read: 0 };
+    books.forEach((b) => { if (b.status) c[b.status] = (c[b.status] || 0) + 1; });
+    return c;
   }, [books]);
 
-  const filteredBooks = useMemo(() => {
-    if (activeFilter === "all") return books;
-    return books.filter((book) => book.status === activeFilter);
-  }, [books, activeFilter]);
+  const filteredBooks = useMemo(() =>
+    activeFilter === "all" ? books : books.filter((b) => b.status === activeFilter),
+    [books, activeFilter]
+  );
 
   const filters = [
     { id: "all",     label: "All Books", icon: null },
@@ -35,14 +33,13 @@ export default function Books() {
     { id: "read",    label: "Read",      icon: "read" },
   ];
 
-  const handleFilterChange = (filterId) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (filterId === "all") newParams.delete("status");
-    else newParams.set("status", filterId);
-    setSearchParams(newParams);
+  const handleFilter = (id) => {
+    const p = new URLSearchParams(searchParams);
+    id === "all" ? p.delete("status") : p.set("status", id);
+    setSearchParams(p);
   };
 
-  const bookEmojis = ["📘", "📕", "📗", "📙", "📓", "📔", "📒"];
+  const emojis = ["📘","📕","📗","📙","📓","📔","📒"];
 
   return (
     <div className="books-container">
@@ -51,15 +48,15 @@ export default function Books() {
       </h2>
 
       <div className="filter-tabs">
-        {filters.map((filter) => (
+        {filters.map((f) => (
           <button
-            key={filter.id}
-            className={`filter-tab${activeFilter === filter.id ? " active" : ""}`}
-            onClick={() => handleFilterChange(filter.id)}
+            key={f.id}
+            className={`filter-tab${activeFilter === f.id ? " active" : ""}`}
+            onClick={() => handleFilter(f.id)}
           >
-            {filter.icon && <span className={`status-icon ${filter.icon}`} />}
-            {filter.label}
-            <span className="filter-tab-count">{statusCounts[filter.id] || 0}</span>
+            {f.icon && <span className={`status-icon ${f.icon}`} />}
+            {f.label}
+            <span className="filter-tab-count">{statusCounts[f.id] || 0}</span>
           </button>
         ))}
       </div>
@@ -76,25 +73,20 @@ export default function Books() {
                   }
                 >
                   <div className="book-info-link">
-                    <div className="book-icon">
-                      {bookEmojis[idx % bookEmojis.length]}
-                    </div>
+                    <div className="book-icon">{emojis[idx % emojis.length]}</div>
                     <div className="book-content">
                       <span className="book-title">{book.title || "No Title"}</span>
-                      {book.author && (
-                        <span className="book-author">{book.author}</span>
-                      )}
+                      {book.author && <span className="book-author">{book.author}</span>}
                     </div>
                     <div className="book-meta">
-                      {/* Fix: MySQL returns 0/1, use explicit truthy check */}
-                      {book.favorite === true || book.favorite === 1 ? (
+                      {/* MySQL returns 0/1 — check explicitly */}
+                      {(book.favorite === 1 || book.favorite === true) && (
                         <span className="book-fav">★</span>
-                      ) : null}
+                      )}
                       {book.status && (
                         <span className={`book-status-badge-small ${book.status}`}>
                           {book.status === "to-read" ? "To Read"
-                            : book.status === "reading" ? "Reading"
-                            : "Read"}
+                            : book.status === "reading" ? "Reading" : "Read"}
                         </span>
                       )}
                     </div>
@@ -105,7 +97,7 @@ export default function Books() {
           </ul>
         ) : (
           <div className="no-books">
-            <div className="no-books-icon">📭</div>
+            <span className="no-books-icon">📭</span>
             <p className="no-books-text">
               {q ? `No results for "${q}"`
                 : activeFilter !== "all"
