@@ -35,7 +35,7 @@ git clone https://github.com/H24-D/Personal-Book-Tracker.git
 
 cd Personal-Book-Tracker
 
-3. Install dependencies
+2. Install dependencies
    
 # Frontend
 
@@ -79,7 +79,7 @@ FRONTEND_URL=http://localhost:5173
 
 SKIP_DB_CREATE=false
 
-5. Run locally
+4. Run locally
    
 # Start backend
 
@@ -114,6 +114,7 @@ Use Forgot Password to reset via email link
 
 
 📁 Project Structure
+
 Personal-Book-Tracker/
 ├── Frontend/                  # React + Vite frontend
 
@@ -130,33 +131,57 @@ Personal-Book-Tracker/
 │   │   │   ├── login.jsx
 
 │   │   │   ├── Register.jsx
+
 │   │   │   ├── ResetPassword.jsx
+
 │   │   │   ├── root.jsx
+
 │   │   │   ├── books.jsx
+
 │   │   │   ├── book.jsx
+
 │   │   │   └── edit.jsx
+
 │   │   ├── books.css
+
 │   │   ├── index.css
+
 │   │   ├── api.js
+
 │   │   └── main.jsx
+
 │   └── package.json
+
 ├── Backend/                   # Node.js + Express backend
+
 │   ├── controllers/
+
 │   │   └── authController.js
+
 │   ├── routes/
+
 │   │   └── authRoutes.js
+
 │   ├── middleware/
+
 │   │   └── auth.js
+
 │   ├── config/
+
 │   │   └── db.js
+
 │   └── server.js
+
 └── README.md
 
 ⚠️ Notes
 
 Render free tier spins down after inactivity — first load may take ~50 seconds
+
 JWT tokens expire after 2 days — users are automatically logged out
+
 Password reset links expire after 1 hour
+
 Only Gmail addresses are accepted for registration
 
 
