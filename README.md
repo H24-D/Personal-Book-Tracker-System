@@ -9,12 +9,19 @@ Add your screenshots here
 ✨ Features
 
 🔐 User authentication — Register, login, and auto-logout after 2 days
+
 📖 Track books — Add books with title, author, status, and review
+
 ⭐ Favourites — Mark books as favourites with one click
+
 🔍 Live search — Search books instantly from the sidebar
+
 📊 Filter by status — Filter by To Read, Reading, or Read
+
 🔑 Forgot password — Reset password via email using Brevo
+
 📱 Fully responsive — Beautiful UI on both mobile and desktop
+
 🌙 Dark mode — Sleek black and blue dark theme throughout
 
 
@@ -23,63 +30,105 @@ LayerTechFrontendReact, React Router, ViteBackendNode.js, ExpressDatabaseMySQLEm
 
 🚀 Getting Started
 1. Clone the repo
+   
 git clone https://github.com/H24-D/Personal-Book-Tracker.git
+
 cd Personal-Book-Tracker
-2. Install dependencies
+
+3. Install dependencies
+   
 # Frontend
+
 cd Frontend
+
 npm install
 
 # Backend
+
 cd ../Backend
+
 npm install
+
 3. Set up environment variables
+   
 Frontend — create Frontend/.env:
+
 VITE_API_BASE=http://localhost:5000/api
+
 Backend — create Backend/.env:
+
 PORT=5000
+
 MYSQL_HOST=localhost
+
 MYSQL_PORT=3306
+
 MYSQL_USER=root
+
 MYSQL_PASSWORD=your_password
+
 MYSQL_DATABASE=booktracker
+
 JWT_SECRET=your_jwt_secret
+
 BREVO_API_KEY=your_brevo_api_key
+
 MAIL_FROM=your_verified_email@gmail.com
+
 FRONTEND_URL=http://localhost:5173
+
 SKIP_DB_CREATE=false
-4. Run locally
+
+5. Run locally
+   
 # Start backend
+
 cd Backend
+
 npm run dev
 
 # Start frontend (new terminal)
 cd Frontend
+
 npm run dev
 
 🌐 Deployment
-ServicePurposeVercelFrontend hostingRenderBackend hostingMySQLDatabase (PlanetScale / Railway / Aiven)BrevoTransactional email (password reset)
+
+ServicePurposeVercelFrontend hostingRenderBackend hostingMySQLDatabase (Clever Cloud)BrevoTransactional email (password reset)
 
 📱 How to Use
 
 Register an account with your Gmail address
+
 Log in — session lasts 2 days then auto-logs out
+
 Add books with title, author, status, and optional review
+
 Mark books as favourite with the ★ button
+
 Filter your list by reading status
+
 Search books instantly from the sidebar
+
 Use Forgot Password to reset via email link
 
 
 📁 Project Structure
 Personal-Book-Tracker/
 ├── Frontend/                  # React + Vite frontend
+
 │   ├── src/
+
 │   │   ├── auth/
+
 │   │   │   ├── AuthProvider.jsx
+
 │   │   │   └── Protected.jsx
+
 │   │   ├── routes/
+
 │   │   │   ├── login.jsx
+
 │   │   │   ├── Register.jsx
 │   │   │   ├── ResetPassword.jsx
 │   │   │   ├── root.jsx
