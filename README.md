@@ -16,7 +16,7 @@ A full-stack web application to track books you've read, are currently reading, 
 ![Add Book](./screenshots/add-book.png)
 
 ### Forgot Password
-![Forgot Password](./screenshots/forgot-password.png)
+![Forgot Password](./screenshots/forget-password.png)
 
 
 ✨ Features
