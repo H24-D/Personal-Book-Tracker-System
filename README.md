@@ -1,9 +1,22 @@
 📚 Personal Book Tracker
 A full-stack web application to track books you've read, are currently reading, or plan to read — with user authentication, real-time search, and a beautiful dark UI.
 
-📸 Screenshots
+## 📸 Screenshots
 
-Add your screenshots here
+### Login Page
+![Login Page](./screenshots/loginpage.png)
+
+### Register Page
+![Register Page](./screenshots/registerpage.png)
+
+### Dashboard
+![Dashboard](./screenshots/home-page.png)
+
+### Add Book
+![Add Book](./screenshots/add-book.png)
+
+### Forgot Password
+![Forgot Password](./screenshots/forgot-password.png)
 
 
 ✨ Features
